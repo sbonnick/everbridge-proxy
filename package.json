@@ -1,0 +1,29 @@
+{
+  "name": "everbridge-proxy",
+  "version": "1.0.0",
+  "description": "proxy for communicating with everbridge. Allowing for CORS concerns and an easier API",
+  "main": "server.js",
+  "repository": "sbonnick/everbridge-proxy",
+  "author": "Stewart Bonnick",
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "body-parser": "^1.17.2",
+    "cors": "^2.8.4",
+    "express": "^4.15.4",
+    "moment": "^2.18.1",
+    "moment-timezone": "^0.5.13",
+    "multer": "^1.3.0",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
+    "string.format": "^1.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "develop": "nodemon server.js"
+  }
+}
