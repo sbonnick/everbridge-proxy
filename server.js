@@ -8,6 +8,8 @@ const eb       = require('./src/queryEverbridge');
 const search   = require('./src/searchResults');
 const util     = require('./src/utils');
 
+const millHour = 3600000;
+
 const PORT         = process.env.PORT || 8080;
 const HOST         = process.env.HOST || '0.0.0.0';
 const USERNAME     = process.env.USER;
@@ -18,6 +20,7 @@ app.use(bodyPars.json());
 app.use(cors({credentials: true, origin: true}))
 
 eb.connection(USERNAME, PASSWORD, ORGANIZATION);
+eb.cacheTimouts(millHour * 24, millHour * 24, millHour);
 
 app.get('/', (req, res) => {
   res.send(require('./src/defaultRoute').response(req, app))

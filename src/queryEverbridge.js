@@ -1,6 +1,7 @@
 var request = require('request-promise');
 require('string.format');
-var moment = require('moment-timezone');
+var moment  = require('moment-timezone');
+var cache   = require('memory-cache');
 
 //TODO: expose this as env or auto detect
 const tz = "America/New_York";
@@ -8,6 +9,13 @@ const tzFormat = 'YYYY-MM-DDTHH:mm:ss';
 const _ebBaseUrl = 'https://api.everbridge.net/rest';
 var _baseRequest;
 var _orgId;
+var _cacheTimeouts = {
+  contacts:   undefined,
+  calendars:  undefined,
+  assignment: undefined
+};
+
+cache.debug(true);
 
 //TODO: assuming UTC. should either auto-discover or leave conversion to the UI and pass through time zone
 function convertDate(date, zone) {
@@ -29,23 +37,43 @@ function connection(user, pass, organizationId) {
   _orgId = organizationId;
 }
 
+
+function cacheTimouts(contacts, calendar) {
+  _cacheTimeouts = {
+    contacts: contacts,
+    calendars: calendar
+  }
+}
+
 function getContacts(groupId) {
+  var cached = cache.get('contacts-{id}'.format({id: groupId}))
+  if (cached != null) return cached;
+
   var url = '{baseUrl}/contacts/{org}?pageNumber=1&groupIds={group}&searchType=AND'.format({
     baseUrl: _ebBaseUrl,
     org:     _orgId,
     group:   groupId
   });
 
-  return _baseRequest({uri: url, method: "GET"})  
+  var query = _baseRequest({uri: url, method: "GET"})
+  cache.put('contacts-{id}'.format({id: groupId}), query, _cacheTimeouts.contacts);
+
+  return query;
 }
 
-function getCalendars(calendarId) {
+function getCalendars() {
+  var cached = cache.get('calendars-{org}'.format({org: _orgId}))
+  if (cached != null) return cached;
+
   var url = '{baseUrl}/calendars/{org}'.format({
     baseUrl: _ebBaseUrl,
     org:     _orgId
   });
   
-  return _baseRequest({uri: url, method: "GET"});     
+  var query = _baseRequest({uri: url, method: "GET"});   
+  cache.put('calendars-{org}'.format({org: _orgId}), query, _cacheTimeouts.calendars);
+  
+  return query;  
 }
 
 //TODO: handle paging
@@ -117,6 +145,7 @@ function removeSubstitution(substitutionId) {
 
 module.exports = {
   connection: connection,
+  cacheTimouts: cacheTimouts,
   getContacts: getContacts,
   getCalendars: getCalendars,
   getAssignments: getAssignments,
