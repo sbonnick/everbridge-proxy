@@ -90,16 +90,31 @@ function getAssignments(calendarExtId, dateRange) {
   return _baseRequest({uri: url, method: "GET"})  
 }
 
-//TODO: handle paging
-function getSubstitutions(calendarId) {
+function getSubstitutions(calendarId, page=1, data) {
 
-  var url = '{baseUrl}/scheduling/{org}/substitutions?include=contact&filter%5BcalendarId%5D={cal}&pageSize=50'.format({
+  return _getSubstitutionsPage(calendarId, page)
+    .then(function(response) {
+      if (!data) data = [];
+      
+      data = data.concat(response.data);
+
+      if (response.totalPageCount > page) {
+        return getSubstitutions(calendarId, page + 1, data)
+      }
+      return {data: data};
+    });
+}
+
+function _getSubstitutionsPage(calendarId, page) {
+
+  var url = '{baseUrl}/scheduling/{org}/substitutions?filter%5BcalendarId%5D={cal}&pageSize=50&pageNo={page}'.format({
     baseUrl: _ebBaseUrl,
     org:     _orgId,
     cal:     calendarId,
+    page:   page,
   });
 
-  return _baseRequest({uri: url, method: "GET"})  
+  return _baseRequest({uri: url, method: "GET"})
 }
 
 function setSubstitution(calendarId, sourceContact, syncContact, dateRange) {
