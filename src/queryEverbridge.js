@@ -6,6 +6,7 @@ var cache   = require('memory-cache');
 //TODO: expose this as env or auto detect
 const tz = "America/New_York";
 const tzFormat = 'YYYY-MM-DDTHH:mm:ss';
+const tdDateFormat = 'YYYY-MM-DD';
 const _ebBaseUrl = 'https://api.everbridge.net/rest';
 var _baseRequest;
 var _orgId;
@@ -14,8 +15,6 @@ var _cacheTimeouts = {
   calendars:  undefined,
   assignment: undefined
 };
-
-cache.debug(true);
 
 //TODO: assuming UTC. should either auto-discover or leave conversion to the UI and pass through time zone
 function convertDate(date, zone) {
@@ -86,8 +85,125 @@ function getAssignments(calendarExtId, dateRange) {
     start:   dateRange.start.toISOString().replace(/:/g, '%3A'),
     end:     dateRange.end.toISOString().replace(/:/g, '%3A')
   });
-
   return _baseRequest({uri: url, method: "GET"})  
+}
+
+function getStaffSchedules(calendarId, page=1, data) {
+  
+    return _getStaffSchedulesPage(calendarId, page)
+    .then(function(response) {
+      if (!data) data = [];
+      
+      data = data.concat(response.data);
+  
+      if (response.totalPageCount > page) {
+        return getShiftSchedules(calendarId, page + 1, data)
+      }
+      return {data: data};
+    });
+  }
+  
+  function _getStaffSchedulesPage(calendarId, page) {
+  
+    var url = '{baseUrl}/scheduling/{org}/staffSchedules?filter%5BcalendarId%5D={cal}&pageSize=50&pageNo={page}'.format({
+      baseUrl: _ebBaseUrl,
+      org:     _orgId,
+      cal:     calendarId,
+      page:   page,
+    });
+  
+    return _baseRequest({uri: url, method: "GET"})
+  }
+
+function getShiftSchedules(calendarId, page=1, data) {
+
+  return _getShiftSchedulesPage(calendarId, page)
+  .then(function(response) {
+    if (!data) data = [];
+    
+    data = data.concat(response.data);
+
+    if (response.totalPageCount > page) {
+      return getShiftSchedules(calendarId, page + 1, data)
+    }
+    return {data: data};
+  });
+}
+
+function _getShiftSchedulesPage(calendarId, page) {
+
+  var url = '{baseUrl}/scheduling/{org}/shiftSchedules?filter%5BcalendarId%5D={cal}&pageSize=50&pageNo={page}'.format({
+    baseUrl: _ebBaseUrl,
+    org:     _orgId,
+    cal:     calendarId,
+    page:   page,
+  });
+
+  return _baseRequest({uri: url, method: "GET"})
+}
+
+function getShiftSubstitutions(calendarId, page=1, data) {
+
+  return _getShiftSubstitutionsPage(calendarId, page)
+  .then(function(response) {
+    if (!data) data = [];
+    
+    data = data.concat(response.data);
+
+    if (response.totalPageCount > page) {
+      return getShiftSubstitutions(calendarId, page + 1, data)
+    }
+    return {data: data};
+  });
+}
+
+function _getShiftSubstitutionsPage(calendarId, page) {
+  
+    var url = '{baseUrl}/scheduling/{org}/shiftSubstitutions?filter%5BcalendarId%5D={cal}&pageSize=50&pageNo={page}'.format({
+      baseUrl: _ebBaseUrl,
+      org:     _orgId,
+      cal:     calendarId,
+      page:   page,
+    });
+  
+    return _baseRequest({uri: url, method: "GET"})
+  }
+
+function setShiftSubstitution(calendarId, shiftScheduleId, syncContacts, dates) {
+    
+  var url = '{baseUrl}/scheduling/{org}/shiftSubstitutions'.format({
+    baseUrl: _ebBaseUrl,
+    org:     _orgId
+  });
+
+  var payload = {
+    "data": {
+      "type": "shiftSubstitution",
+      "calendarId": calendarId,
+      "shiftScheduleId": shiftScheduleId,
+      "recurrence": {
+        "type": "occurrence",
+        "datesApplicable": dates  
+      },
+      "staffAssignment": {
+        "type": "contact",
+        "contactIds": syncContacts
+      },
+      "timeZoneString": tz
+    }
+  }
+  return _baseRequest({uri: url, method: "POST", json: payload})
+}
+
+function removeShiftSubstitution(substitutionId) {
+  
+  var url = '{baseUrl}/scheduling/{org}/shiftSubstitutions/{sub}'.format({
+    baseUrl: _ebBaseUrl,
+    org:     _orgId,
+    sub:     substitutionId,
+  });
+
+  return _baseRequest({uri: url, method: "DELETE"})
 }
 
 function getSubstitutions(calendarId, page=1, data) {
@@ -107,7 +223,7 @@ function getSubstitutions(calendarId, page=1, data) {
 
 function _getSubstitutionsPage(calendarId, page) {
 
-  var url = '{baseUrl}/scheduling/{org}/substitutions?filter%5BcalendarId%5D={cal}&pageSize=50&pageNo={page}'.format({
+  var url = '{baseUrl}/scheduling/{org}/substitutions?filter%5BcalendarId%5D={cal}&sort=createdDate&pageSize=50&pageNo={page}'.format({
     baseUrl: _ebBaseUrl,
     org:     _orgId,
     cal:     calendarId,
@@ -164,6 +280,13 @@ module.exports = {
   getContacts: getContacts,
   getCalendars: getCalendars,
   getAssignments: getAssignments,
+  getStaffSchedules: getStaffSchedules,
+
+  getShiftSchedules: getShiftSchedules,
+  getShiftSubstitutions: getShiftSubstitutions,
+  setShiftSubstitution: setShiftSubstitution,
+  removeShiftSubstitution: removeShiftSubstitution,
+
   getSubstitutions: getSubstitutions,
   setSubstitution: setSubstitution,
   removeSubstitution: removeSubstitution

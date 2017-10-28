@@ -9,18 +9,22 @@ function forCalendar(id, calendars) {
   }              
 }
 
-function forSubstitutions(dateRange, data) {
-  var subs = [];
+function forRecurrence(dateRange, data) {
+  var rec = [];
   for (var i = 0; i < data.data.length; i++) {
-    recurrence = {
-      start: new Date(data.data[i].recurrence.datesApplicable.from),
-      end: new Date(data.data[i].recurrence.datesApplicable.to),
+    var candidate = false;
+    if (data.data[i].recurrence.type == 'occurrence') {
+      candidate = util.dayRangeMatch(dateRange, data.data[i].recurrence.datesApplicable)
+    } else if (data.data[i].recurrence.type == 'ical') {
+      var recurrence = {
+        start: new Date(data.data[i].recurrence.datesApplicable.from),
+        end: new Date(data.data[i].recurrence.datesApplicable.to),
+      }
+      candidate = util.inDateRange(dateRange, recurrence)
     }
-    if (util.inDateRange(dateRange, recurrence)) {
-      subs.push(data.data[i]);
-    }
+    if (candidate) rec.push(data.data[i]);
   }
-  return { data: subs};
+  return { data: rec};
 }
 
 function allData(data) {
@@ -38,7 +42,7 @@ function allAssignmentsData(data) {
 
 module.exports = {
   forCalendar: forCalendar,
-  forSubstitutions: forSubstitutions,
+  forRecurrence: forRecurrence,
   allData: allData,
   allPageData: allPageData,
   allAssignmentsData: allAssignmentsData

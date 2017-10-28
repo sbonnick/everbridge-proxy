@@ -1,3 +1,4 @@
+var moment  = require('moment-timezone');
 
 function dayDateRange(date, days = 1) {
   date = (typeof date !== 'undefined') ? new Date(date).toISOString().slice(0,10) : (new Date()).toISOString().slice(0,10);
@@ -17,8 +18,16 @@ function inDateRange(dateRange1, dateRange2) {
        (dateRange2.start >= dateRange1.start && dateRange2.start <= dateRange1.end);
 }
 
+function dayRangeMatch(dateRange, dayList) {
+  for (var i = 0; i < dayList.length; i++) {
+    if (moment(dateRange.start).isSameOrBefore(dayList[i], 'day') && moment(dateRange.end).isSameOrAfter(dayList[i], 'day'))
+      return true
+  }
+  return false
+}
 
 module.exports = {
   dayDateRange: dayDateRange,
-  inDateRange:  inDateRange
+  inDateRange:  inDateRange,
+  dayRangeMatch: dayRangeMatch
 };

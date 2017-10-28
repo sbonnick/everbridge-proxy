@@ -53,6 +53,46 @@ app.get('/calendars/:calendarId/assignment/:date?/:days?', (req, res) => {
     .then(result => res.send(result));
 });
 
+app.get('/calendars/:calendarId/staff', (req, res) => {
+  eb.getStaffSchedules(req.params.calendarId)
+    .then(data   => search.allData(data))
+    .then(result => res.send(result));
+});
+
+// Shifts and Shift Overrides
+
+app.get('/calendars/:calendarId/shifts', (req, res) => {
+  eb.getShiftSchedules(req.params.calendarId)
+    .then(data   => search.allData(data))
+    .then(result => res.send(result));
+});
+
+app.get('/calendars/:calendarId/overrides', (req, res) => {
+  eb.getShiftSubstitutions(req.params.calendarId)
+    .then(data   => search.allData(data))
+    .then(result => res.send(result));
+});
+
+app.get('/calendars/:calendarId/overrides/:date/:days', (req, res) => {
+  var dateRange = util.dayDateRange(req.params.date, req.params.days)
+  eb.getShiftSubstitutions(req.params.calendarId)
+    .then(data   => search.forRecurrence(dateRange, data))
+    .then(result => res.send(result));
+});
+
+app.post('/calendars/:calendarId/overrides', (req, res) => {
+  eb.setShiftSubstitution(req.params.calendarId, req.body.shiftScheduleId, req.body.replacementIds, req.body.dates )
+    .then(result => res.send(result));
+});
+
+app.delete('/calendars/:calendarId/overrides/:overrideId', (req, res) => {
+  eb.removeShiftSubstitution(req.params.overrideId)
+    .then(result => res.send(result));
+});
+
+
+// Staff substitutions
+
 app.get('/calendars/:calendarId/substitutions', (req, res) => {
   eb.getSubstitutions(req.params.calendarId)
     .then(data   => search.allData(data))
@@ -62,7 +102,7 @@ app.get('/calendars/:calendarId/substitutions', (req, res) => {
 app.get('/calendars/:calendarId/substitutions/:date/:days', (req, res) => {
   var dateRange = util.dayDateRange(req.params.date, req.params.days)
   eb.getSubstitutions(req.params.calendarId)
-    .then(data   => search.forSubstitutions(dateRange, data))
+    .then(data   => search.forRecurrence(dateRange, data))
     .then(result => res.send(result));
 });
 
@@ -77,6 +117,9 @@ app.delete('/calendars/:calendarId/substitutions/:substitutionId', (req, res) =>
   eb.removeSubstitution(req.params.substitutionId)
     .then(result => res.send(result));
 });
+
+
+// Init
 
 app.listen(PORT, HOST, () => {
   console.log(`Running on http://${HOST}:${PORT}`)
