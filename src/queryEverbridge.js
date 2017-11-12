@@ -195,6 +195,34 @@ function setShiftSubstitution(calendarId, shiftScheduleId, syncContacts, dates) 
   return _baseRequest({uri: url, method: "POST", json: payload})
 }
 
+function updateShiftSubstitution(substitutionId, calendarId, shiftScheduleId, syncContacts, dates) {
+  
+  var url = '{baseUrl}/scheduling/{org}/shiftSubstitutions/{sub}'.format({
+    baseUrl: _ebBaseUrl,
+    org:     _orgId,
+    sub:     substitutionId,
+  });
+
+  var payload = {
+    "data": {
+      "type": "shiftSubstitution",
+      "calendarId": calendarId,
+      "shiftScheduleId": shiftScheduleId,
+      "recurrence": {
+        "type": "occurrence",
+        "datesApplicable": dates  
+      },
+      "staffAssignment": {
+        "type": "contact",
+        "contactIds": syncContacts
+      },
+      "timeZoneString": tz
+    }
+  }
+
+  return _baseRequest({uri: url, method: "PUT", json: payload})
+}
+
 function removeShiftSubstitution(substitutionId) {
   
   var url = '{baseUrl}/scheduling/{org}/shiftSubstitutions/{sub}'.format({
@@ -285,6 +313,7 @@ module.exports = {
   getShiftSchedules: getShiftSchedules,
   getShiftSubstitutions: getShiftSubstitutions,
   setShiftSubstitution: setShiftSubstitution,
+  updateShiftSubstitution: updateShiftSubstitution,
   removeShiftSubstitution: removeShiftSubstitution,
 
   getSubstitutions: getSubstitutions,

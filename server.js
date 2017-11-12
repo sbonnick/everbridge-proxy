@@ -81,7 +81,12 @@ app.get('/calendars/:calendarId/overrides/:date/:days', (req, res) => {
 });
 
 app.post('/calendars/:calendarId/overrides', (req, res) => {
-  eb.setShiftSubstitution(req.params.calendarId, req.body.shiftScheduleId, req.body.replacementIds, req.body.dates )
+  eb.setShiftSubstitution(req.params.calendarId, req.body.shiftScheduleId, req.body.replacementIds, req.body.dates)
+    .then(result => res.send(result));
+});
+
+app.put('/calendars/:calendarId/overrides/:overrideId', (req, res) => {
+  eb.updateShiftSubstitution(req.params.overrideId, req.params.calendarId, req.body.shiftScheduleId, req.body.replacementIds, req.body.dates)
     .then(result => res.send(result));
 });
 
